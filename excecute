@@ -1,0 +1,58 @@
+#!/bin/sh
+
+NAME="daemon sample"
+DESC="daemon sample program."
+
+EXEC="/usr/local/bin/jsvc"
+JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk1.8.0_121.jdk/Contents/Home"
+CLASS_PATH="./commons-daemon-1.0.15.jar:./daemonSample.jar"	##絶対パスにしないと動かない
+CLASS="daemonSample.daemonSample"
+USER="mozzzzy"
+PID="/tmp/daemonSample.pid"
+LOG_OUT="/tmp/daemonSample.log"
+LOG_ERR="/tmp/daemonSample.err"
+
+jsvc_exec()
+{
+	$EXEC -home $JAVA_HOME -cp $CLASS_PATH -user $USER -outfile $LOG_OUT -errfile $LOG_ERR -pidfile $PID $1 $CLASS
+}
+
+case "$1" in
+        start)
+                echo "Starting the $DESC..."
+
+                # Start the service
+                jsvc_exec
+
+                echo "The $DESC has started."
+        ;;
+        stop)
+                echo "Stopping the $DESC..."
+
+                # Stop the service
+                jsvc_exec "-stop"
+
+                echo "The $DESC has stopped."
+        ;;
+        restart)
+                if [ -f "$PID" ]; then
+
+                        echo "Restarting the $DESC..."
+
+                        # Stop the service
+                        jsvc_exec "-stop"
+
+                        # Start the service
+                        jsvc_exec
+
+                        echo "The $DESC has restarted."
+                else
+                        echo "Daemon not running, no action taken"
+                        exit 1
+                fi
+        ;;
+        *)
+                echo "Usage: /etc/init.d/$NAME {start|stop|restart}" >&2
+                exit 3
+        ;;
+esac
